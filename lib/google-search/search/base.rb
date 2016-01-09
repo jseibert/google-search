@@ -101,10 +101,14 @@ module Google
     # Iterate each item with _block_.
 
     def each_item &block
-      response = self.next.response
+      response = self.response
       if response.valid?
         response.each { |item| yield item }
-        each_item &block
+
+        if response.has_next?
+          @offset = response.next_page_offset
+          each_item &block
+        end
       end
     end
     alias :each :each_item
@@ -142,11 +146,6 @@ module Google
     ##
     # Prepare for next request.
 
-    def next
-      @offset += Search.size_for(size) if sent
-      self
-    end
-
     ##
     # Return raw JSON response string.
 
@@ -176,14 +175,6 @@ module Google
       response
     end
     alias :response :get_response
-
-    ##
-    # Return int for size _sym_.
-
-    def self.size_for sym
-      { :small => 4,
-        :large => 8 }[sym]
-    end
 
     #:nodoc:
 
